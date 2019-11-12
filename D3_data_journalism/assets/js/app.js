@@ -30,16 +30,17 @@ d3.csv("assets/data/data.csv").then(function(healthData) {
 
   // Parse Data/Cast as Numbers
 healthData.forEach(function(data) {
-  data.obesity = +data.obesity;
+  data.poverty = +data.poverty;
   data.healthcare = +data.healthcare;
 });
 
 // Create scale functions
 var xLinearScale = d3.scaleLinear()
-      .domain([20, d3.max(healthData, d => d.poverty)])
+      //.domain(d3.extent(healthData, d => d.poverty))
+      .domain([d3.min(healthData, d => d.poverty) * 0.9, d3.max(healthData, d => d.poverty) * 1.05])
       .range([0, width]);
 
-var yLinearScale = d3.scaleLinear()
+    var yLinearScale = d3.scaleLinear()
       .domain([0, d3.max(healthData, d => d.healthcare)])
       .range([height, 0]);
 
@@ -55,6 +56,7 @@ chartGroup.append("g")
 chartGroup.append("g")
   .call(leftAxis);
 
+
 // Create Circles
 var circlesGroup = chartGroup.selectAll("circle")
 .data(healthData)
@@ -63,19 +65,27 @@ var circlesGroup = chartGroup.selectAll("circle")
 .attr("cx", d => xLinearScale(d.poverty))
 .attr("cy", d => yLinearScale(d.healthcare))
 .attr("r", "15")
-.attr("fill", "pink")
-.attr("opacity", ".5");
+.attr("fill", "blue")
+.attr("opacity", "0.5");
+ 
+// Create Variable for Circle Labels
+var circleLabels = chartGroup.selectAll(null).data(healthData).enter().append("text");
 
-// Initialize Tool Kit
-var toolTip = d3.tip()
-      .attr("class", "tooltip")
-      .offset([80, -60])
-      .html(function(d) {
-        return (`${d.id}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
-      });
-      
-// Create Toolkit in the Chart
-chartGroup.call(toolTip);
+
+circleLabels
+  .attr("x", function(d) {
+    return xLinearScale(d.poverty);
+  })
+  .attr("y", function(d) {
+    return yLinearScale(d.healthcare);
+  })
+  .text(function(d) {
+    return d.abbr;
+  })
+  .attr("font-family", "sans-serif")
+  .attr("font-size", "10px")
+  .attr("text-anchor", "middle")
+  .attr("fill", "white");
 
 // Create event listeners to display and hide the tooltip
 circlesGroup.on("click", function(data) {
